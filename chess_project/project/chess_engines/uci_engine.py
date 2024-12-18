@@ -1,7 +1,11 @@
 import chess
-from project.chess_agents.agent import Agent
+from ChessAgent.chess_project.project.chess_agents.agent import Agent
+
+
 
 class UciEngine():
+    # heb bij de __init__() de agent: UciEngine vervangen door agent: Agent. Maar dit is mogelijks niet de bedoeling. Dus vandaar deze
+    # comment. Als er iets fout is met uci_engine kan het zeker aan dit liggen
     
     def __init__(self, name: str, author: str, agent: Agent) -> None:
         self.name = name

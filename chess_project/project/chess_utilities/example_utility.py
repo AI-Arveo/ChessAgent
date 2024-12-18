@@ -1,5 +1,5 @@
 import chess
-from project.chess_utilities.utility import Utility
+from ChessAgent.chess_project.project.chess_utilities.utility import Utility
 
 class ExampleUtility(Utility):
 

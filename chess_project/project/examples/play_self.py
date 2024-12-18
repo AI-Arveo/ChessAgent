@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-from project.chess_utilities.utility import Utility
 import chess
 import chess.svg
-from project.chess_utilities.example_utility import ExampleUtility
-from project.chess_agents.example_agent import ExampleAgent
+
+from ChessAgent.chess_project.project.chess_agents.example_agent import ExampleAgent
+from ChessAgent.chess_project.project.chess_utilities.example_utility import ExampleUtility
 
 """ Two agents play against eachother until the game is finished """
 def play_self():

@@ -1,8 +1,10 @@
-from project.chess_agents.agent import Agent
+#from project.chess_agents.agent import Agent
 import chess
-from project.chess_utilities.utility import Utility
 import time
 import random
+
+from ChessAgent.chess_project.project.chess_utilities.utility import Utility
+from ChessAgent.chess_project.project.chess_agents.agent import Agent
 
 """An example search agent with two implemented methods to determine the next move"""
 class ExampleAgent(Agent):

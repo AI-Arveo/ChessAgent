@@ -1,8 +1,11 @@
 import math
 import chess
 from functools import wraps
-from project.Logger import Logger, BoardRepr
-from project.chess_utilities.utility import Utility
+
+from ChessAgent.chess_project.project.Logger import BoardRepr
+from ChessAgent.chess_project.project.Logger import Logger
+
+from ChessAgent.chess_project.project.chess_utilities.utility import Utility
 
 class Agent:
     def __init__(self, utility: Utility, time_limit_move: float) -> None:

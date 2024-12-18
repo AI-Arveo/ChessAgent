@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 import os
-from project.chess_utilities.example_utility import ExampleUtility
-from project.chess_agents.example_agent import ExampleAgent
 import chess
 import chess.engine
 import chess.pgn
+
+from ChessAgent.chess_project.project.chess_agents.example_agent import ExampleAgent
+from ChessAgent.chess_project.project.chess_utilities.example_utility import ExampleUtility
 
 """ An agent plays a game against the stockfish engine """
 def play_stockfish(uci_engine_path):
