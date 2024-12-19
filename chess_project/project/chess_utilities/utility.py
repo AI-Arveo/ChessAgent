@@ -9,7 +9,7 @@ class Utility(ABC):
     PIECE_VALUES = {
         chess.PAWN: 1,
         chess.KNIGHT: 3,
-        chess.BISHOP: 3.5,  # Bishops are slightly more versatile than knights
+        chess.BISHOP: 3.5,
         chess.ROOK: 5,
         chess.QUEEN: 9,
         chess.KING: 100  # Extremely high value for king safety
@@ -36,16 +36,12 @@ class Utility(ABC):
         try:
             result = self.engine.analyse(board, chess.engine.Limit(depth=depth))
             score = result["score"].white()
-
-            # Handle mate scenarios
             if score.is_mate():
                 return 10000 if score.mate() > 0 else -10000
-
-            # Convert centipawns to a scaled score
             return score.score() / 100.0
         except Exception as e:
-            print(f"Error analyzing board with Stockfish: {e}")
-            return 0  # Return 0 in case of error
+            print(f"Stockfish failed, falling back to material evaluation: {e}")
+            return self.material_value(board)
 
     def material_value(self, board: chess.Board) -> float:
         """
@@ -58,6 +54,13 @@ class Utility(ABC):
             value = self.PIECE_VALUES.get(piece.piece_type, 0)
             score += value if piece.color == chess.WHITE else -value
         return score
+
+    def mobility_value(self, board: chess.Board) -> float:
+        white_moves = len(list(board.legal_moves)) if board.turn == chess.WHITE else 0
+        board.turn = not board.turn
+        black_moves = len(list(board.legal_moves)) if board.turn == chess.BLACK else 0
+        board.turn = not board.turn
+        return white_moves - black_moves
 
     def close(self):
         """
