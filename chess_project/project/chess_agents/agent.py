@@ -3,10 +3,10 @@ import chess
 import chess.engine
 import csv
 from functools import wraps
-from ChessAgent.chess_project.project.chess_endings.syzygy_endings import initialize_tablebase
-from ChessAgent.chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
-from ChessAgent.chess_project.project.chess_utilities.utility import Utility
-from ChessAgent.chess_project.project.Logger import Logger
+from chess_project.project.chess_endings.syzygy_endings import initialize_tablebase
+from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
+from chess_project.project.chess_utilities.utility import Utility
+from chess_project.project.Logger import Logger
 import torch
 
 
@@ -50,7 +50,7 @@ class Agent:
         :param depth: Depth for Minimax search.
         :return: Best move in UCI format.
         """
-        # Step 1: Check the opening book for the current position
+        #First we check the opening book for the current position
         opening_move = self.select_opening_move(board)
         if opening_move:
             return opening_move
@@ -155,7 +155,7 @@ class Agent:
         :param board: Current chess board.
         :return: Evaluation score.
         """
-        # Convert board to a tensor representation
+        # Convert the board to a tensor representation
         board_tensor = self.board_to_tensor(board)
         with torch.no_grad():
             evaluation = self.nn_model(board_tensor.unsqueeze(0))  # Add batch dimension
@@ -168,12 +168,14 @@ class Agent:
         :param board: Current chess board.
         :return: PyTorch tensor representation of the board.
         """
+        # 12 -> 1 channel for each piece type (I.E. pawn, knight, rook, ...)
+        # 8x8 = size of the chessboard
         tensor = torch.zeros((12, 8, 8))
-        piece_map = board.piece_map()
+        piece_map = board.piece_map() #Returns position of every piece as a dict
         for square, piece in piece_map.items():
-            channel = piece.piece_type - 1
+            channel = piece.piece_type - 1 #pawn = 1, knight = 2, ...
             if not piece.color:
-                channel += 6  # Black pieces in separate channels
-            row, col = divmod(square, 8)
-            tensor[channel, row, col] = 1
+                channel += 6  # Black pieces in separate channels (white = 0-5 (PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING), black = 6-11 (Ofcourse same types))
+            row, col = divmod(square, 8) #mark position of each piece on the board using the for loop
+            tensor[channel, row, col] = 1 #Voorbeeld: White pawn on e2 = tensor[0][6][4]
         return tensor
