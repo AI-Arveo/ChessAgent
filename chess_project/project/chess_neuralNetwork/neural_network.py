@@ -9,7 +9,7 @@ class NeuralNetwork(nn.Module):
         # tussen pieces gaat leren
 
         # gebruik sequential om meerdere layers na elkaar te gebruiken
-        self.layer1 = nn.Sequential(nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1), # 1ste convolutionl layer
+        self.layer1 = nn.Sequential(nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=3, padding=1), # 1ste convolutionl layer
                                     # ReLU introduceert niet-lineariteit, waardoor het netwerk complexe functies kan leren
                                     nn.ReLU(),
                                     nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1), # 2de convolutional layer
