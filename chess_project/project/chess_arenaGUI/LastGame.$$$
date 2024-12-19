@@ -1,0 +1,21 @@
+[LastMove "2"]
+[Event "Computer chess game"]
+[Site "DELLMATEO"]
+[Date "2024.12.19"]
+[Round "?"]
+[White "Run_engine"]
+[Black "Run_engine"]
+[Result "1-0"]
+[BlackElo "2000"]
+[ECO "A00"]
+[Opening "Van Kruij's Opening"]
+[Time "13:06:53"]
+[WhiteElo "2000"]
+[TimeControl "300"]
+[Termination "time forfeit"]
+[PlyCount "1"]
+[WhiteType "program"]
+[BlackType "program"]
+
+1. e3 ... {Black forfeits on time} 1-0
+

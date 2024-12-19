@@ -3,9 +3,12 @@ import chess
 import chess.engine
 import csv
 from functools import wraps
-from chess_project.project.chess_utilities.utility import Utility
-from syzygy_endings import initialize_tablebase  # Ensure correct import path
-from neural_network import ChessNet  # Assume this is your PyTorch neural network
+from ChessAgent.chess_project.project.chess_endings.syzygy_endings import initialize_tablebase
+from ChessAgent.chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
+from ChessAgent.chess_project.project.chess_utilities.utility import Utility
+from ChessAgent.chess_project.project.Logger import Logger
+import torch
+
 
 class Agent:
     def __init__(self, utility: Utility, time_limit_move: float, opening_files: list, tablebase_path: str):
@@ -21,7 +24,7 @@ class Agent:
         self.time_limit_move = time_limit_move
         self.opening_book = self.load_opening_book(opening_files)
         self.tablebase = initialize_tablebase(tablebase_path)
-        self.nn_model = ChessNet()  # Neural network for mid-game evaluation
+        self.nn_model = NeuralNetwork()  # Neural network for mid-game evaluation
         self.logger = Logger()
 
     def load_opening_book(self, file_paths):
