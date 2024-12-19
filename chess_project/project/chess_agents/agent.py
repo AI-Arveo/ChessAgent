@@ -3,10 +3,10 @@ import chess
 import chess.engine
 import csv
 from functools import wraps
-from ChessAgent.chess_project.project.chess_endings.syzygy_endings import initialize_tablebase
-from ChessAgent.chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
-from ChessAgent.chess_project.project.chess_utilities.utility import Utility
-from ChessAgent.chess_project.project.Logger import Logger
+from chess_project.project.chess_endings.syzygy_endings import initialize_tablebase
+from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
+from chess_project.project.chess_utilities.utility import Utility
+from chess_project.project.Logger import Logger
 import torch
 
 

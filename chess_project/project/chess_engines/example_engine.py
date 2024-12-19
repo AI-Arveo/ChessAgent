@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import chess
 
-from ChessAgent.chess_project.project.chess_agents.example_agent import ExampleAgent
-from ChessAgent.chess_project.project.chess_engines.uci_engine import UciEngine
-from ChessAgent.chess_project.project.chess_utilities.example_utility import ExampleUtility
+from chess_project.project.chess_agents.example_agent import ExampleAgent
+from chess_project.project.chess_engines.uci_engine import UciEngine
+from chess_project.project.chess_utilities.example_utility import ExampleUtility
 
 
 if __name__ == "__main__":

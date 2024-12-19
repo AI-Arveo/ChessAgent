@@ -1,5 +1,5 @@
 import chess
-from ChessAgent.chess_project.project.chess_agents.agent import Agent
+from chess_project.project.chess_agents.agent import Agent
 
 
 
