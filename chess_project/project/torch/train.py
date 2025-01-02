@@ -39,9 +39,9 @@ print(f"GAMES PARSED: {len(games)}")
 
 # Preprocess data
 print("Preprocessing data...")
-X, y = create_input_for_nn(games)
-X, y = X[:2500000], y[:2500000]  # Limit the number of samples for training
-y, move_to_int = encode_moves(y)
+X, y = create_input_for_nn(games)  # X contains board representations; y contains UCI moves
+print("y before encode_moves:", y[:10])  # Debug: Check the format of y
+y, move_to_int = encode_moves(y)  # Encode UCI moves to indices
 num_classes = len(move_to_int)  # Number of unique moves (classes)
 
 # Convert data to PyTorch tensors
@@ -52,41 +52,49 @@ y = torch.tensor(y, dtype=torch.long)
 train_dataset = TensorDataset(X, y)
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-# Initialize the neural network
-print("Initializing neural network...")
-# Update input channels to match X
-input_channels = X.shape[1]  # Automatically use the first dimension of X for channels
-board_size = 8  # Chessboard is 8x8
-model = NeuralNetwork(input_channels, board_size, num_classes)
+# Set the device (CPU or GPU)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
+# Initialize the neural network and move it to the device
+input_channels = 13  # 12 for pieces, 1 for legal moves
+board_size = 8  # Chessboard is 8x8
+model = NeuralNetwork(input_channels, board_size, num_classes).to(device)
 
 # Define loss function and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-# Training loop
-print("Starting training...")
 for epoch in range(EPOCHS):
     model.train()
     running_loss = 0.0
     for batch_idx, (inputs, targets) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch + 1}/{EPOCHS}")):
+        # Move inputs and targets to the device
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+
         # Forward pass
-        outputs = model(inputs)
-        #print("output: "+str(outputs))
-        print("targets: "+str(targets))
-        loss = criterion(outputs, targets)
+        outputs = model(inputs)  # Should have requires_grad=True
+        print(f"outputs.requires_grad: {outputs.requires_grad}")
+
+        # Flatten outputs to match targets
+        batch_size = outputs.shape[0]
+        outputs = outputs.view(batch_size, -1)
+
+        # Compute the loss
+        loss = criterion(outputs, targets)  # Should have requires_grad=True
+        print(f"loss.requires_grad: {loss.requires_grad}")
 
         # Backward pass and optimization
         optimizer.zero_grad()
-        loss.backward()
+        loss.backward()  # Ensure this works without error
         optimizer.step()
 
         running_loss += loss.item()
-
-    # Print epoch summary
+    #Epoch Summary
     print(f"Epoch {epoch + 1}/{EPOCHS}, Loss: {running_loss / len(train_loader):.4f}")
 
 # Save the trained model
 print("Saving model...")
-model.save(MODEL_SAVE_PATH)
+torch.save(model.state_dict(), MODEL_SAVE_PATH)
 print(f"Model saved to {MODEL_SAVE_PATH}")
