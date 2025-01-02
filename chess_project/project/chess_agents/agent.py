@@ -53,12 +53,14 @@ class Agent:
         #First we check the opening book for the current position
         opening_move = self.select_opening_move(board)
         if opening_move:
+            print("opening move: "+str(opening_move))
             return opening_move
 
         # Step 2: Use Syzygy tablebase if in endgame
         if len(board.piece_map()) <= 5:
             best_move = self.use_tablebase(board)
             if best_move:
+                print('end-game move (syzygy): '+str(best_move))
                 return best_move
 
         # Step 3: Use Minimax with neural network evaluation for mid-game

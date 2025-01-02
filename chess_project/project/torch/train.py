@@ -69,12 +69,15 @@ for epoch in range(EPOCHS):
     model.train()
     running_loss = 0.0
     for batch_idx, (inputs, targets) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch + 1}/{EPOCHS}")):
+        for param in model.parameters():
+            param.requires_grad = True
         # Move inputs and targets to the device
         inputs = inputs.to(device)
         targets = targets.to(device)
 
         # Forward pass
         outputs = model(inputs)  # Should have requires_grad=True
+        outputs.requires_grad = True
         print(f"outputs.requires_grad: {outputs.requires_grad}")
 
         # Flatten outputs to match targets
@@ -83,11 +86,16 @@ for epoch in range(EPOCHS):
 
         # Compute the loss
         loss = criterion(outputs, targets)  # Should have requires_grad=True
+        print('loss: '+str(loss))
         print(f"loss.requires_grad: {loss.requires_grad}")
 
         # Backward pass and optimization
         optimizer.zero_grad()
+
+        # computes the gradients of the loss with respect to the model parameters
+        # which are then used by the optimizer to update the parameters
         loss.backward()  # Ensure this works without error
+        #loss.backward
         optimizer.step()
 
         running_loss += loss.item()
