@@ -16,7 +16,7 @@ MODEL_SAVE_PATH = "./chess_model.pth"  # Path to save the trained model
 BATCH_SIZE = 64  # Batch size for training
 EPOCHS = 10  # Number of training epochs
 LEARNING_RATE = 0.001  # Learning rate
-LIMIT_OF_FILES = 28  # Limit the number of PGN files to process
+LIMIT_OF_FILES = 1  # Limit the number of PGN files to process
 
 # Function to load PGN files
 def load_pgn(file_path):
@@ -72,6 +72,8 @@ for epoch in range(EPOCHS):
     for batch_idx, (inputs, targets) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch + 1}/{EPOCHS}")):
         # Forward pass
         outputs = model(inputs)
+        #print("output: "+str(outputs))
+        print("targets: "+str(targets))
         loss = criterion(outputs, targets)
 
         # Backward pass and optimization
