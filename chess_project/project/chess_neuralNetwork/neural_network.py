@@ -19,17 +19,18 @@ class NeuralNetwork(nn.Module):
                                     nn.ReLU(),
                                     # maxPool2d om dimensies te verkleinen
                                     nn.MaxPool2d(kernel_size=2, stride=2))
+        self.flatten_size = (board_size // 2) * (board_size // 2) * 32
         self.layer2 = nn.Sequential(nn.Flatten(), # 64x832
-                                    nn.Linear(in_features=832, out_features=board_size * board_size * 64),
+                                    nn.Linear(in_features=self.flatten_size, out_features=board_size * board_size * 64),
                                     nn.Linear(in_features=board_size * board_size * 64,out_features= 128), # 1ste fully connected layer (4096x128)
                                     # er is geen activation function nodig bij lineare/fully connected lagen
                                     nn.Linear(in_features=128, out_features=512), # 2e fully connected layer
                                     nn.Linear(in_features=512, out_features=num_moves)) # 3e fully connected layer
 
     def forward(self, x):
-        self.layer1(x)
-        self.layer2(x)
-        return nn.Softmax(dim=1)(x)
+        x = self.layer1(x)  # Pass input through the first set of layers
+        x = self.layer2(x)  # Pass the output of layer1 to layer2
+        return x  # Return raw logits
 
     # Wordt gebruikt om de parameters van ons netwerk te optimaliseren (denk aan het aantal layers, nodes, type of layers?)
     def optimize(self):

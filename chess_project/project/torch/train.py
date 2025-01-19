@@ -99,7 +99,8 @@ for epoch in range(EPOCHS):
         optimizer.step()
 
         running_loss += loss.item()
-    #Epoch Summary
+
+    # Print epoch summary
     print(f"Epoch {epoch + 1}/{EPOCHS}, Loss: {running_loss / len(train_loader):.4f}")
 
 # Save the trained model
