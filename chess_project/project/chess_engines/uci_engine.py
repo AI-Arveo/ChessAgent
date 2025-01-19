@@ -1,75 +1,86 @@
+import sys
 import chess
-from chess_project.project.chess_agents.agent import Agent
+import torch
+from chess_project.project.chess_utilities.utility import Utility
+from chess_project.project.torch.auxiliary_func import decode_move_with_probabilities, board_to_tensor
+from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
+
+# Load the trained model
+MODEL_PATH = r"D:\PythonProjects\ChessAgent\chess_project\chess_model.pth"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Initialize Utility with the custom neural network model
+try:
+    utility = Utility(model_path=MODEL_PATH, device=DEVICE)
+except Exception as e:
+    print(f"Error initializing Utility: {e}")
+    sys.exit(1)
+
+board = chess.Board()  # Initialize a new chess board
 
 
+def uci_loop():
+    """
+    Main loop to handle UCI commands from Arena GUI.
+    """
+    while True:
+        try:
+            command = input().strip()  # Read a command from Arena GUI
+        except EOFError:
+            break
 
-class UciEngine():
-    # heb bij de __init__() de agent: UciEngine vervangen door agent: Agent. Maar dit is mogelijks niet de bedoeling. Dus vandaar deze
-    # comment. Als er iets fout is met uci_engine kan het zeker aan dit liggen
-    
-    def __init__(self, name: str, author: str, agent: Agent) -> None:
-        self.name = name
-        self.author = author
-        self.agent = agent
-        
-        
-    def engine_operation(self):
-        # Create a clean chess board
-        board = chess.Board()
-
-        # Continuously receive commands and process them
-        while True:
-            input_val = input().split(' ')
-
-            if len(input_val) > 2:
-                if input_val[0] == "position" and \
-                        input_val[1] == "startpos" and \
-                        input_val[2] == "moves":
-                    board = chess.Board()
-                    for move in input_val[3::]:
+        if command == "uci":
+            # UCI initialization command
+            print("id name MyChessAgent")
+            print("id author Your Name")
+            print("uciok")
+        elif command == "isready":
+            # Readiness check
+            print("readyok")
+        elif command.startswith("position"):
+            # Update board position
+            try:
+                if "moves" in command:
+                    parts = command.split(" moves")
+                    fen = parts[0].replace("position fen ", "").replace("position startpos", chess.STARTING_FEN).strip()
+                    moves = parts[1].strip().split()
+                    board.set_fen(fen)
+                    for move in moves:
                         board.push_uci(move)
-                elif input_val[0] == "go":
-                    print("bestmove {}".format(self.agent.calculate_move(board)))
+                else:
+                    board.set_fen(chess.STARTING_FEN)
+                print(f"Board updated to FEN: {board.fen()}")  # Debugging log
+            except Exception as e:
+                print(f"Error updating board position: {e}")
+        elif command.startswith("go"):
+            # Calculate the best move
+            print("Calculating best move...")
+            try:
+                # Convert board to tensor and evaluate with the neural network
+                board_tensor = board_to_tensor(board).unsqueeze(0).to(DEVICE)
+                with torch.no_grad():
+                    output = utility.model(board_tensor)  # Pass through the neural network
+                best_move, probability = decode_move_with_probabilities(output, board)
+                print(f"bestmove {best_move}")  # Respond with the best move in UCI format
+            except Exception as e:
+                # Fallback: Play a random legal move if the neural network fails
+                print(f"Error during move calculation: {e}")
+                try:
+                    fallback_move = list(board.legal_moves)[0]
+                    print(f"bestmove {fallback_move}")
+                except IndexError:
+                    print("No legal moves available. Stalemate or checkmate.")
+        elif command == "quit":
+            # Quit the engine
+            utility.close()
+            break
+        else:
+            # Ignore unknown commands for compatibility
+            print(f"info string Unknown command: {command}")
 
-            elif len(input_val) > 1:
-                if input_val[0] == "position" and \
-                        input_val[1] == "startpos":
-                    board = chess.Board()
-                    for move in input_val[3::]:
-                        board.push_uci(move)
 
-            elif len(input_val) > 0:
-                if input_val[0] == "uci":
-                    self.__uci()
-
-                elif input_val[0] == "quit":
-                    break
-
-                elif input_val[0] == "ucinewgame":
-                    board = chess.Board()
-
-                elif input_val[0] == "isready":
-                    print("readyok")
-                    
-                    
-    def __uci(self):
-        print("""id name {}
-id author {}
-option name Debug Log File type string default
-option name Contempt type spin default 0 min -100 max 100
-option name Threads type spin default 1 min 1 max 128
-option name Hash type spin default 16 min 1 max 1048576
-option name Clear Hash type button
-option name Ponder type check default false
-option name MultiPV type spin default 1 min 1 max 500
-option name Skill Level type spin default 20 min 0 max 20
-option name Move Overhead type spin default 30 min 0 max 5000
-option name Minimum Thinking Time type spin default 20 min 0 max 5000
-option name Slow Mover type spin default 89 min 10 max 1000
-option name nodestime type spin default 0 min 0 max 10000
-option name UCI_Chess960 type check default false
-option name SyzygyPath type string default <empty>
-option name SyzygyProbeDepth type spin default 1 min 1 max 100
-option name Syzygy50MoveRule type check default true
-option name SyzygyProbeLimit type spin default 6 min 0 max 6
-uciok""".format(self.name, self.author))
+if __name__ == "__main__":
+    try:
+        uci_loop()
+    except Exception as main_error:
+        print(f"Unexpected error in UCI loop: {main_error}")

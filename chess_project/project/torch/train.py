@@ -12,7 +12,7 @@ from auxiliary_func import create_input_for_nn, encode_moves
 
 # Configuration
 PGN_DIR = "../../../LichessEliteDatabase"  # Path to the PGN files
-MODEL_SAVE_PATH = "./chess_model.pth"  # Path to save the trained model
+MODEL_SAVE_PATH = "../../chess_model.pth"  # Path to save the trained model
 BATCH_SIZE = 64  # Batch size for training
 EPOCHS = 10  # Number of training epochs
 LEARNING_RATE = 0.001  # Learning rate
@@ -42,7 +42,7 @@ print("Preprocessing data...")
 X, y = create_input_for_nn(games)  # X contains board representations; y contains UCI moves
 print("y before encode_moves:", y[:10])  # Debug: Check the format of y
 y, move_to_int = encode_moves(y)  # Encode UCI moves to indices
-num_classes = len(move_to_int)  # Number of unique moves (classes)
+num_classes = 512 #len(move_to_int)  # Number of unique moves (classes)
 
 # Convert data to PyTorch tensors
 X = torch.tensor(X, dtype=torch.float32)
@@ -69,15 +69,12 @@ for epoch in range(EPOCHS):
     model.train()
     running_loss = 0.0
     for batch_idx, (inputs, targets) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch + 1}/{EPOCHS}")):
-        for param in model.parameters():
-            param.requires_grad = True
         # Move inputs and targets to the device
         inputs = inputs.to(device)
         targets = targets.to(device)
 
         # Forward pass
         outputs = model(inputs)  # Should have requires_grad=True
-        outputs.requires_grad = True
         print(f"outputs.requires_grad: {outputs.requires_grad}")
 
         # Flatten outputs to match targets

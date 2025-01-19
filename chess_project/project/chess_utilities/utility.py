@@ -1,10 +1,12 @@
 from abc import ABC
 import chess
-import chess.engine
+import torch
+from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
+
 
 class Utility(ABC):
     """
-    A utility class for evaluating chess board positions using Stockfish and material evaluation.
+    A utility class for evaluating chess board positions using the custom neural network.
     """
     PIECE_VALUES = {
         chess.PAWN: 1,
@@ -12,35 +14,46 @@ class Utility(ABC):
         chess.BISHOP: 3.5,
         chess.ROOK: 5,
         chess.QUEEN: 9,
-        chess.KING: 100  # Extremely high value for king safety
+        chess.KING: 100  # High value for king safety
     }
 
-    def __init__(self):
+    def __init__(self, model_path, device):
         """
-        Initialize the Utility class with a Stockfish engine.
-        :param stockfish_path: Path to the Stockfish executable.
+        Initialize the Utility class with the neural network model.
+        :param model_path: Path to the trained neural network model (.pth file).
+        :param device: The device to use (e.g., "cpu" or "cuda").
         """
-        self.stockfish_path = "../../../stockfish/stockfish-windows-x86-64-avx2.exe"
+        self.device = device
         try:
-            self.engine = chess.engine.SimpleEngine.popen_uci(self.stockfish_path)
+            # Load the neural network model
+            input_channels = 13  # 12 for pieces, 1 for legal moves
+            board_size = 8  # Chessboard size
+            num_classes = 512  # Match to output classes
+            self.model = NeuralNetwork(input_channels, board_size, num_classes).to(device)
+            self.model.load_state_dict(torch.load(model_path, map_location=device))
+            self.model.eval()  # Set the model to evaluation mode
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize Stockfish engine: {e}")
+            raise RuntimeError(f"Failed to initialize the neural network model: {e}")
 
-    def board_value(self, board: chess.Board, depth: int = 15) -> float:
+    def board_value(self, board: chess.Board) -> float:
         """
-        Evaluate the current board position using Stockfish.
+        Evaluate the current board position using the neural network.
         :param board: The chess board to evaluate.
-        :param depth: Depth of Stockfish analysis.
         :return: A numerical score (positive favors white, negative favors black).
         """
         try:
-            result = self.engine.analyse(board, chess.engine.Limit(depth=depth))
-            score = result["score"].white()
-            if score.is_mate():
-                return 10000 if score.mate() > 0 else -10000
-            return score.score() / 100.0
+            # Convert the board to a tensor representation
+            from chess_project.project.torch.auxiliary_func import board_to_tensor
+            board_tensor = board_to_tensor(board).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                output = self.model(board_tensor)
+
+            # For now, return the sum of probabilities as a placeholder score
+            probabilities = torch.softmax(output, dim=1)
+            score = probabilities.sum().item()
+            return score
         except Exception as e:
-            print(f"Stockfish failed, falling back to material evaluation: {e}")
+            print(f"Neural network evaluation failed, falling back to material evaluation: {e}")
             return self.material_value(board)
 
     def material_value(self, board: chess.Board) -> float:
@@ -55,18 +68,8 @@ class Utility(ABC):
             score += value if piece.color == chess.WHITE else -value
         return score
 
-    def mobility_value(self, board: chess.Board) -> float:
-        white_moves = len(list(board.legal_moves)) if board.turn == chess.WHITE else 0
-        board.turn = not board.turn
-        black_moves = len(list(board.legal_moves)) if board.turn == chess.BLACK else 0
-        board.turn = not board.turn
-        return white_moves - black_moves
-
     def close(self):
         """
-        Safely close the Stockfish engine.
+        Safely close resources, if any.
         """
-        try:
-            self.engine.quit()
-        except Exception as e:
-            print(f"Failed to close Stockfish engine: {e}")
+        pass

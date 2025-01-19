@@ -1,80 +1,95 @@
 import numpy as np
-from chess import Board
 import torch
+import chess
 
-def board_to_matrix(board: Board):
-    # 8x8 is the size of the chess board.
-    # 12 = number of unique pieces.
-    # 13th board for legal moves (WHERE we can move)
-    # maybe 14th for squares FROM WHICH we can move? idk
-    matrix = np.zeros((13, 8, 8))
+
+def board_to_tensor(board: chess.Board):
+    """
+    Convert a chess board into a tensor representation.
+    :param board: chess.Board object representing the current game state.
+    :return: A PyTorch tensor of shape (13, 8, 8).
+    """
+    # Initialize a tensor with 13 channels (12 for pieces, 1 for legal moves)
+    tensor = torch.zeros((13, 8, 8), dtype=torch.float32)
+
+    # Map pieces to channels (White: 0-5, Black: 6-11)
     piece_map = board.piece_map()
-
-    # Populate first 12 8x8 boards (where pieces are)
     for square, piece in piece_map.items():
+        channel = piece.piece_type - 1
+        if not piece.color:  # Black pieces are in channels 6-11
+            channel += 6
         row, col = divmod(square, 8)
-        piece_type = piece.piece_type - 1
-        piece_color = 0 if piece.color else 6
-        matrix[piece_type + piece_color, row, col] = 1
+        tensor[channel, row, col] = 1.0
 
-    # Populate the legal moves board (13th 8x8 board)
-    legal_moves = board.legal_moves
-    for move in legal_moves:
+    # Add legal moves to the 13th channel
+    for move in board.legal_moves:
         to_square = move.to_square
-        row_to, col_to = divmod(to_square, 8)
-        matrix[12, row_to, col_to] = 1
+        row, col = divmod(to_square, 8)
+        tensor[12, row, col] = 1.0
 
-    return matrix
+    return tensor
+
+
+def encode_moves(moves):
+    """
+    Encode a list of moves into numerical indices.
+    :param moves: List of moves in UCI string format.
+    :return: A numpy array of encoded moves and a move-to-index mapping dictionary.
+    """
+    move_to_int = {move: idx for idx, move in enumerate(set(moves))}
+    return np.array([move_to_int[move] for move in moves], dtype=np.int64), move_to_int
+
+
+def decode_move_with_probabilities(output, board):
+    """
+    Decode the neural network's output into a move based on probabilities.
+    :param output: Neural network's raw output tensor (logits or probabilities).
+    :param board: chess.Board object representing the current game state.
+    :return: Best move in UCI format and its associated probability.
+    """
+    # Apply softmax to get probabilities
+    probabilities = torch.softmax(output, dim=1).squeeze(0)
+
+    # Sort moves by probability in descending order
+    move_indices = probabilities.argsort(descending=True)
+
+    for move_index in move_indices:
+        try:
+            # Map the move index to UCI format (you need a mapping in your training)
+            uci_move = board.legal_moves[move_index.item()]  # Replace with your int-to-uci mapping if needed
+            move = chess.Move.from_uci(uci_move)
+            if move in board.legal_moves:
+                return move.uci(), probabilities[move_index].item()
+        except Exception:
+            continue
+
+    # Fallback: Return the first legal move if no valid move is found
+    return list(board.legal_moves)[0].uci(), 0.0
+
 
 def create_input_for_nn(games):
+    """
+    Generate training data (input and labels) from a list of games.
+    :param games: List of chess games in python-chess PGN format.
+    :return: Tuple of numpy arrays (inputs, labels).
+    """
     X = []
     y = []
     for game in games:
         board = game.board()
         for move in game.mainline_moves():
-            X.append(board_to_matrix(board))
-            y.append(move.uci())  # Convert to UCI format here
+            X.append(board_to_tensor(board).numpy())  # Convert tensor to numpy for storage
+            y.append(move.uci())
             board.push(move)
     return np.array(X, dtype=np.float32), np.array(y)
 
-def encode_move_to_index(move, board):
+
+def decode_move(move_index, move_to_int):
     """
-    Encode a move into a single integer index corresponding to the flattened neural network output.
-
-    :param move: The chess move in UCI format.
-    :param board: The current chess board.
-    :return: An integer index for the move.
+    Decode a move index back to its UCI string format.
+    :param move_index: Numerical index of the move.
+    :param move_to_int: Dictionary mapping UCI moves to indices.
+    :return: Decoded move in UCI format.
     """
-    source_square = move.from_square
-    target_square = move.to_square
-
-    # Determine the piece type and color at the source square
-    piece = board.piece_at(source_square)
-    if piece is None:
-        raise ValueError("No piece at the source square")
-
-    piece_type = piece.piece_type - 1  # Piece types range from 1-6
-    piece_color = 0 if piece.color else 6  # White: 0-5, Black: 6-11
-
-    channel = piece_type + piece_color
-
-    # Flatten the index for the target square
-    index = (channel * 64) + target_square
-    return index
-
-def encode_moves(moves):
-    """
-    Create a mapping for moves and encode them as unique indices.
-
-    :param moves: List of moves (in UCI format or convertible to UCI).
-    :return: Encoded move indices and a move-to-index mapping.
-    """
-    # Convert moves to UCI strings if they are tensors or other formats
-    moves_uci = [move.uci() if isinstance(move, torch.Tensor) else move for move in moves]
-
-    # Create a unique mapping of moves to indices
-    move_to_int = {move: idx for idx, move in enumerate(set(moves_uci))}
-
-    # Encode moves using the mapping
-    return np.array([move_to_int[move] for move in moves_uci], dtype=np.int64), move_to_int
-
+    int_to_move = {v: k for k, v in move_to_int.items()}
+    return int_to_move[move_index]
