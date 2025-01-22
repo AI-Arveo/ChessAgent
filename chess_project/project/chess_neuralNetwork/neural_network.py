@@ -1,3 +1,4 @@
+import chess
 from torch import nn
 import torch
 
@@ -9,6 +10,7 @@ class NeuralNetwork(nn.Module):
         # tussen pieces gaat leren
 
         # gebruik sequential om meerdere layers na elkaar te gebruiken
+        print("input_channels "+str(input_channels))
         self.layer1 = nn.Sequential(nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=3, padding=1), # 1ste convolutionl layer
                                     # ReLU introduceert niet-lineariteit, waardoor het netwerk complexe functies kan leren
                                     nn.ReLU(),
@@ -27,10 +29,11 @@ class NeuralNetwork(nn.Module):
                                     nn.Linear(in_features=128, out_features=512), # 2e fully connected layer
                                     nn.Linear(in_features=512, out_features=num_moves)) # 3e fully connected layer
 
-    def forward(self, x):
-        x = self.layer1(x)  # Pass input through the first set of layers
-        x = self.layer2(x)  # Pass the output of layer1 to layer2
-        return x  # Return raw logits
+    def forward(self, board: chess.Board):
+        features = self.featureOutOfBoard(board)
+        out1 = self.layer1(features)  # Pass input through the first set of layers
+        out2 = self.layer2(out1)  # Pass the output of layer1 to layer2
+        return out2  # Return raw logits
 
     # Wordt gebruikt om de parameters van ons netwerk te optimaliseren (denk aan het aantal layers, nodes, type of layers?)
     def optimize(self):
@@ -39,3 +42,78 @@ class NeuralNetwork(nn.Module):
     # kan mogelijks gebruikt worden om ons model op te slagen. Maar moet hier nog wat meer onderzoek naar doen
     def save(self, path):
         torch.save(self.state_dict(), path)
+
+    def featureOutOfBoard(self, board: chess.Board) -> torch.Tensor:
+        """
+        This method is used to extract the features out of the given board state
+        Black<0, White>0 and 0 = no piece
+        We will assign values to each piece:
+        - King = 10
+        - Queen = 5
+        - Rook = 4
+        - Bishop = 3 -> We make the Bishop's value be slightly higher than the knight (which normally
+        - Knight = 2 -> would also be valued at 3), because the bishop is slightly stronger
+        - Pawns = 1
+        """
+
+        boardString: str = board.fen() # gives the Forsyth-Edwards Notation string
+        # creates a one-dimensional tensor containing 65 values of datatype 32-bit floating point
+        features: torch.Tensor = torch.Tensor([65],dtype=torch.float32)
+
+        # color is needed to find the color of the piece
+        color: int = 1
+        piece: int = 0
+        position: int = 0
+
+        # manipulating the input string so it can be used for processing
+        positions: str = boardString.split()[0] # take the first item in the split
+        positions = positions.replace("/","")
+        turnString: str = boardString.split()[1]
+        turn: int
+
+        # find who's turn it is out of the turnString
+        if turnString == "w":
+            turn = 10
+        else:
+            turn = -10
+
+        # if in the position you find a number, it indicates that there are x empty spaces.
+        # if it isn't a number -> is a piece
+        for elem in positions:
+            if elem.isnumeric():
+                for i in range(int(elem)):
+                    features[position] = 0
+                    position += 1
+
+            else:
+                if elem.isupper():
+                    color = 1
+                else:
+                    color = -1
+
+                match elem.lower():
+                    case 'k':
+                        piece = 10
+                    case 'q':
+                        piece = 5
+                    case 'r':
+                        piece = 4
+                    case 'b':
+                        piece = 3
+                    case 'n':
+                        piece = 2
+                    case 'p':
+                        piece = 1
+                    case _:
+                        piece = 0
+
+                features[position] = color * piece
+                position += 1
+        features[position] = turn
+        return features
+
+
+
+
+
+

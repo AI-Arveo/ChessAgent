@@ -73,3 +73,6 @@ class Utility(ABC):
         Safely close resources, if any.
         """
         pass
+
+def isDraw(board: chess.Board) -> bool:
+    return board.is_stalemate() or board.is_insufficient_material() or board.is_fivefold_repetition() or board.is_seventyfive_moves()

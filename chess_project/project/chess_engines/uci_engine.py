@@ -6,7 +6,7 @@ from chess_project.project.torch.auxiliary_func import decode_move_with_probabil
 from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
 
 # Load the trained model
-MODEL_PATH = r"D:\PythonProjects\ChessAgent\chess_project\chess_model.pth"
+MODEL_PATH = "D:\\User\\Mateo\\Unif\\S5\\Artificiële Intelligentie\\Chess_AI_Project\\ChessAgent\\chess_project\\chess_model.pth"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Initialize Utility with the custom neural network model
