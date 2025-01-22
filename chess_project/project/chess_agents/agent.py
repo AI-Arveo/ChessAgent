@@ -22,7 +22,13 @@ class Agent:
         """
         self.utility = utility
         self.time_limit_move = time_limit_move
-        self.opening_book = self.load_opening_book(opening_files)
+        self.opening_book = self.load_opening_book([
+            "../chess_openings/a.tsv",
+            "../chess_openings/b.tsv",
+            "../chess_openings/c.tsv",
+            "../chess_openings/d.tsv",
+            "../chess_openings/e.tsv"
+        ])
         self.tablebase = initialize_tablebase(tablebase_path)
         self.nn_model = NeuralNetwork()  # Neural network for mid-game evaluation
         self.logger = Logger()
@@ -56,14 +62,14 @@ class Agent:
             print("opening move: "+str(opening_move))
             return opening_move
 
-        # Step 2: Use Syzygy tablebase if in endgame
+        # Afterwards we check Syzygy's tablebase if in endgame
         if len(board.piece_map()) <= 5:
             best_move = self.use_tablebase(board)
             if best_move:
                 print('end-game move (syzygy): '+str(best_move))
                 return best_move
 
-        # Step 3: Use Minimax with neural network evaluation for mid-game
+        # Otherwise Use Minimax with neural network evaluation for mid-game
         data = {"best_move": None}
         self.logger.clear()
         self.minimax(board, depth, -math.inf, math.inf, True, True, data)
@@ -102,7 +108,8 @@ class Agent:
                 except Exception:
                     pass
                 board.pop()
-            return best_move
+
+            return best_move.uci() if best_move else None
         except Exception:
             return None
 
