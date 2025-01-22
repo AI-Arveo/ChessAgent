@@ -10,8 +10,7 @@ class NeuralNetwork(nn.Module):
         # tussen pieces gaat leren
 
         # gebruik sequential om meerdere layers na elkaar te gebruiken
-        print("input_channels "+str(input_channels))
-        self.layer1 = nn.Sequential(nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=3, padding=1), # 1ste convolutionl layer
+        self.layers: nn.Sequential = nn.Sequential(nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=3, padding=1), # 1ste convolutionl layer
                                     # ReLU introduceert niet-lineariteit, waardoor het netwerk complexe functies kan leren
                                     nn.ReLU(),
                                     nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1), # 2de convolutional layer
@@ -22,26 +21,21 @@ class NeuralNetwork(nn.Module):
                                     # maxPool2d om dimensies te verkleinen
                                     nn.MaxPool2d(kernel_size=2, stride=2))
         self.flatten_size = (board_size // 2) * (board_size // 2) * 32
-        self.layer2 = nn.Sequential(nn.Flatten(), # 64x832
+        self.layers: nn.Sequential = nn.Sequential(nn.Flatten(), # 64x832
                                     nn.Linear(in_features=self.flatten_size, out_features=board_size * board_size * 64),
                                     nn.Linear(in_features=board_size * board_size * 64,out_features= 128), # 1ste fully connected layer (4096x128)
                                     # er is geen activation function nodig bij lineare/fully connected lagen
                                     nn.Linear(in_features=128, out_features=512), # 2e fully connected layer
                                     nn.Linear(in_features=512, out_features=num_moves)) # 3e fully connected layer
 
-    def forward(self, board: chess.Board):
-        features = self.featureOutOfBoard(board)
-        out1 = self.layer1(features)  # Pass input through the first set of layers
-        out2 = self.layer2(out1)  # Pass the output of layer1 to layer2
-        return out2  # Return raw logits
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out: torch.Tensor = self.layers.forward(x)
+        return out  # Return raw logits
 
-    # Wordt gebruikt om de parameters van ons netwerk te optimaliseren (denk aan het aantal layers, nodes, type of layers?)
-    def optimize(self):
-        pass
-
-    # kan mogelijks gebruikt worden om ons model op te slagen. Maar moet hier nog wat meer onderzoek naar doen
-    def save(self, path):
-        torch.save(self.state_dict(), path)
+    def execute(self, board: chess.Board) -> float:
+        features: torch.Tensor = self.featureOutOfBoard(board)
+        out: float = self.forward(features)[0]
+        return out
 
     def featureOutOfBoard(self, board: chess.Board) -> torch.Tensor:
         """
