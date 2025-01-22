@@ -1,19 +1,21 @@
 [LastMove "1"]
 [Event "Computer chess game"]
 [Site "DELLMATEO"]
-[Date "2024.12.19"]
+[Date "2025.01.02"]
 [Round "?"]
-[White "Run_engine"]
-[Black "Run_engine"]
+[White "Mateo"]
+[Black "Run_engine [003]"]
 [Result "1-0"]
 [BlackElo "2000"]
-[Time "11:17:18"]
-[WhiteElo "2000"]
+[ECO "B00"]
+[Opening "King's Pawn"]
+[Time "20:07:07"]
+[WhiteElo "2400"]
 [TimeControl "300"]
 [Termination "normal"]
 [PlyCount "1"]
 [WhiteType "human"]
 [BlackType "program"]
 
-1. e3 {Black forfeits on time} 1-0
+1. e4 ... {Black forfeits on time} 1-0
 
