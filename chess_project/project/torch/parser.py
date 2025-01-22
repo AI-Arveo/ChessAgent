@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from chess import pgn
 from tqdm import tqdm
 
-from chess_project.project.chess_engines.uci_engine import utility
+from chess_project.project.chess_engines.uci_engineOld import utility
 from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
 from auxiliary_func import create_input_for_nn, encode_moves
 from chess_project.project.chess_utilities.utility import Utility
