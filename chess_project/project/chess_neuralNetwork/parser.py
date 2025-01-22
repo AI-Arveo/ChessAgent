@@ -111,7 +111,7 @@ class DataParser():
 
         print(f"Reading file: {self.file_path}")
         i = 0
-        reader = chess.polyglot.MemoryMappedReader("chess_project/project/chess_openings/Opening_Book/baron30.bin")
+        reader = chess.polyglot.MemoryMappedReader("../../../chess_project/project/chess_openings/baron30.bin")
         engine = chess.engine.SimpleEngine.popen_uci("../../../stockfish/stockfish-windows-x86-64-avx2.exe")
         cache_file = open(self.cached_file, "w")
         boards: list[chess.Board] = []

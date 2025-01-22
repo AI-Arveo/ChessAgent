@@ -2,7 +2,7 @@ import chess
 from chess_project.project.chess_agents.agent import Agent
 import time
 from chess_project.project.chess_utilities.utility import Utility
-from chess_project.project.chess_openings.ReadOpening import ReadOpening
+from chess_project.project.chess_openings.ReadBin import Read_Book
 #from chess_project.project.utils.chess_utils import hash
 from chess.polyglot import zobrist_hash
 
@@ -30,7 +30,7 @@ class MiniMaxAgent(Agent):
         self.name = "ChessAgent"
         self.author = "MatteoArvo"
         self.beginning = True
-        self.Read_Book = ReadOpening()
+        self.Read_Book = Read_Book()
         self.transpositionTable: dict[int, TranspositionEntry] = dict()
 
     def calculate_move(self, board: chess.Board) -> chess.Move:
@@ -60,7 +60,7 @@ class MiniMaxAgent(Agent):
         :param board: Current chess board.
         :return: Move from opening book or None if not available.
         """
-        opening_move = self.ReadOpening.Opening(board)
+        opening_move = self.Read_Book.Opening(board)
         if opening_move:
             print(f"Opening move: {opening_move}")
         return opening_move
