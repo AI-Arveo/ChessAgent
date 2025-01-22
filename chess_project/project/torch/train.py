@@ -9,6 +9,7 @@ from chess import pgn
 from tqdm import tqdm
 from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
 from auxiliary_func import create_input_for_nn, encode_moves
+import chess.pgn
 
 # Configuration
 PGN_DIR = "../../../LichessEliteDatabase"  # Path to the PGN files
@@ -57,7 +58,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # Initialize the neural network and move it to the device
-input_channels = 13  # 12 for pieces, 1 for legal moves
+input_channels = 64*13*9  # 12 for pieces, 1 for legal moves
 board_size = 8  # Chessboard is 8x8
 model = NeuralNetwork(input_channels, board_size, num_classes).to(device)
 
@@ -70,10 +71,12 @@ for epoch in range(EPOCHS):
     running_loss = 0.0
     for batch_idx, (inputs, targets) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch + 1}/{EPOCHS}")):
         # Move inputs and targets to the device
+        print("inputs: "+str(inputs[0][0]))
         inputs = inputs.to(device)
         targets = targets.to(device)
 
         # Forward pass
+        torch.enable_grad = True
         outputs = model(inputs)  # Should have requires_grad=True
         print(f"outputs.requires_grad: {outputs.requires_grad}")
 
