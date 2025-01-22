@@ -107,7 +107,8 @@ class Agent:
             return None
 
     @wraps
-    def minimax(self, board: chess.Board, depth: int, alpha, beta, maximizing_player: bool, save_move: bool, data: dict):
+    def minimax(self, board: chess.Board, depth: int, alpha, beta, maximizing_player: bool, save_move: bool,
+                data: dict):
         """
         Perform a Minimax search with alpha-beta pruning.
 
@@ -120,35 +121,39 @@ class Agent:
         :param data: Dictionary to store the best move.
         :return: Evaluation score of the board.
         """
+        # Base case: Stop searching if depth is 0 or the game is over
         if depth == 0 or board.is_game_over():
-            return self.evaluate_board(board)
+            return self.evaluate_board(board)  # Evaluate the current board state and return the score
 
-        if maximizing_player:
-            max_eval = -math.inf
-            for move in board.legal_moves:
+        if maximizing_player:  # Maximizing player's turn
+            max_eval = -math.inf  # Initialize maximum evaluation score as negative infinity so that
+            for move in board.legal_moves:  # Iterate over all legal moves for the current board state
                 board.push(move)
+                # Recursively call minimax for the minimizing player with reduced depth
                 evaluation = self.minimax(board, depth - 1, alpha, beta, False, False, data)
-                board.pop()
-                if evaluation > max_eval:
+                board.pop()  #restore board state
+                if evaluation > max_eval:  # If the current evaluation is better than the best so far
                     max_eval = evaluation
-                    if save_move:
-                        data["best_move"] = move
-                alpha = max(alpha, evaluation)
-                if beta <= alpha:
+                    if save_move:  # If best move, it should be saved
+                        data["best_move"] = move  # Save the move in the data dictionary
+                alpha = max(alpha, evaluation)  # Update the alpha value (best value for maximizing player so far)
+                if beta <= alpha:  # Alpha-beta pruning condition
                     break
-            return max_eval
-        else:
-            min_eval = math.inf
-            for move in board.legal_moves:
-                board.push(move)
+            return max_eval  # Return the maximum evaluation score
+
+        else:  # Minimizing player's turn
+            min_eval = math.inf  # Initialize minimum evaluation score as positive infinity
+            for move in board.legal_moves:  # Iterate over all legal moves for the current board state
+                board.push(move)  # Make the move on the board
+                # Recursively call minimax for the maximizing player with reduced depth
                 evaluation = self.minimax(board, depth - 1, alpha, beta, True, False, data)
-                board.pop()
-                if evaluation < min_eval:
-                    min_eval = evaluation
-                beta = min(beta, evaluation)
-                if beta <= alpha:
-                    break
-            return min_eval
+                board.pop()  # Undo the move to restore the board state
+                if evaluation < min_eval:  # If the current evaluation is worse than the best so far
+                    min_eval = evaluation  # Update the minimum evaluation
+                beta = min(beta, evaluation)  # Update the beta value (best value for minimizing player so far)
+                if beta <= alpha:  # Alpha-beta pruning condition
+                    break  # Stop searching further as the branch will not affect the result
+            return min_eval  # Return the minimum evaluation score
 
     def evaluate_board(self, board: chess.Board):
         """
