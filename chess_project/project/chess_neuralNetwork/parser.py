@@ -190,7 +190,7 @@ class DataParser():
             with chess.engine.SimpleEngine.popen_uci("../../../stockfish/stockfish-windows-x86-64-avx2.exe") as fish_engine:
                 info = fish_engine.analyse(board,limit=chess.engine.Limit(time=0.3,depth=5))
                 score1 = info["score"].white().score(mate_score=100000)/100.0
-                return score
+                return score1
         info = engine.analyse(board, limit=chess.engine.Limit(time=0.1,depth=3))
         score2 = info["score"].white()
         if score2.is_mate():

@@ -1,8 +1,44 @@
 import chess
 from torch import nn
 import torch
+from chess_project.project.chess_utilities.utility import isDraw
+from enum import Enum
 
-class NeuralNetwork(nn.Module):
+class PIECES(Enum):
+    B_ROOK = chess.Piece.from_symbol('r')
+    B_KNIGHT = chess.Piece.from_symbol('n')
+    B_BISHOP = chess.Piece.from_symbol('b')
+    B_QUEEN = chess.Piece.from_symbol('q')
+    B_KING = chess.Piece.from_symbol('k')
+    B_PAWN = chess.Piece.from_symbol('p')
+    W_ROOK = chess.Piece.from_symbol('R')
+    W_KNIGHT = chess.Piece.from_symbol('N')
+    W_BISHOP = chess.Piece.from_symbol('B')
+    W_QUEEN = chess.Piece.from_symbol('Q')
+    W_KING = chess.Piece.from_symbol('K')
+    W_PAWN = chess.Piece.from_symbol('P')
+
+class Heuristic(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        pass
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        pass
+
+    def execute(self, board: chess.Board) -> float:
+        pass
+
+    def featureExtraction(board: chess.Board) -> torch.Tensor:
+        pass
+
+    def RelativeScore(self) -> bool:
+        """
+        returns the relative score or absolute score from whites perspective
+        """
+        return False
+
+class NeuralNetwork(Heuristic):
     # num_moves zijn het aantal legale moves die op die beurt beschikbaar zijn
     def __init__(self, input_channels, board_size, num_moves):
         super().__init__()
@@ -106,6 +142,66 @@ class NeuralNetwork(nn.Module):
         features[position] = turn
         return features
 
+
+class FullPerspectiveHeuristic(Heuristic):
+    def __init__(self) -> None:
+        super().__init__()
+        layer1Size = 64 * 64 * 10 * 2
+        self.layerWV = nn.Sequential(
+            nn.Linear(layer1Size, 512),
+            nn.Linear(512, 32),
+            nn.Linear(32, 32),
+            nn.Linear(32, 1)
+        )
+
+    def RelativeScore(self) -> bool:
+        return True
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.hidden(x)
+
+    def execute(self, board: chess.Board) -> float:
+        turn = 1 if board.turn == chess.WHITE else -1
+        if board.is_checkmate():
+            return turn * (20000.0)
+        elif isDraw(board):
+            return 0.0
+        features = FullPerspectiveHeuristic.featureExtraction(board)
+        features = features.to('cuda' if torch.cuda.is_available() else 'cpu')
+        score = self.forward(features).item()
+        return score * turn
+
+    def featureExtraction(board: chess.Board) -> torch.Tensor:
+        """
+        Creates a tensor of every position for every piece. Then look up the
+        position of the white & black king. Converts the tensor and matrix multiplies it with
+        the white king tensor. Then invert all positions to the black perspective. And do
+        the same for the black side. Then calculate the white&black worldView
+        """
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+        piece_map = board.piece_map()
+        white_tensor_map = {piece.value: torch.zeros(64, device=device) for piece in PIECES}
+
+        # Indicate for every piece it's position using on hot encoding
+        for square, piece in piece_map.items():
+            white_tensor_map[piece][square] = 1
+
+        whiteKingTensor = white_tensor_map.pop(chess.Piece.from_symbol('K'))
+        blackKingTensor = white_tensor_map.pop(chess.Piece.from_symbol('k')).flip([0])
+
+        whiteTensor = torch.concat(list(white_tensor_map.values()))
+        whiteWorldView: torch.Tensor = whiteKingTensor.outer(whiteTensor)
+        blackTensor = torch.concat([tensor.flip([0]) for tensor in white_tensor_map.values()])
+        blackWorldView = blackKingTensor.outer(blackTensor)
+
+        whiteWorldView = torch.flatten(whiteWorldView)
+        blackWorldView = torch.flatten(blackWorldView)
+
+        # Concatenate the 2 values based on the turn
+        positionTensor = torch.concat([whiteWorldView, blackWorldView]).to(
+            "cpu") if board.turn == chess.WHITE else torch.concat([blackWorldView, whiteWorldView]).to('cpu')
+        return positionTensor
 
 
 
