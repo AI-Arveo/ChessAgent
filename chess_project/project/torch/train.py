@@ -149,8 +149,8 @@ if __name__ == '__main__':
 
 
     # Specify the folder path you want to get filepaths from
-    trainingFolderPath = r"D:\PythonProjects\ChessAgent\LichessEliteDatabase"
-    validationFolderPath = r"D:\PythonProjects\ChessAgent\LichessEliteDatabase"
+    trainingFolderPath = r"D:\PythonProjects\ChessAgent\LichessEliteDatabase" #fixed filepath, Matteo Change this to your file path
+    validationFolderPath = r"D:\PythonProjects\ChessAgent\LichessEliteDatabase" #Same story
 
     trainDataLoader = collectData(
         trainingFolderPath, model.__class__, batchSize)
