@@ -3,6 +3,13 @@ import torch
 import chess
 
 
+# This file was meant for small auxiliary function like converting the moves
+# so that it shouldn't clutter the file in which it was used.
+# However in the final version of the project it really isn't used anymore
+# We found that it would be a shame to delete a crucial file in previous iterations
+# So enjoy reading our struggles
+
+
 def board_to_tensor(board: chess.Board):
     """
     Convert a chess board into a tensor representation.

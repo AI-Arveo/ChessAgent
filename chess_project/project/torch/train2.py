@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from chess import pgn
 from tqdm import tqdm
 from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork
-from auxiliary_func import create_input_for_nn, encode_moves
+
 
 pgn_directory = r"D:\PythonProjects\ChessAgent\LichessEliteDatabase"
 def process_pgn_files(directory):
