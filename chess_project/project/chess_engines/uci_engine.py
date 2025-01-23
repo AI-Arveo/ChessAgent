@@ -20,6 +20,7 @@ class UciEngine:
         """
         Main loop to handle UCI commands from Arena GUI.
         """
+        print("start the loop")
         while True:
             command = input().strip()  # Read input from the GUI
             if not command:

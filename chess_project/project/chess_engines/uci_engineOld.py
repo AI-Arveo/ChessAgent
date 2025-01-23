@@ -67,7 +67,7 @@ def uci_loop():
                 print(f"Error during move calculation: {e}")
                 try:
                     fallback_move = list(board.legal_moves)[0]
-                    print(f"bestmove {fallback_move}")
+                    print(f"fallback_move {fallback_move}")
                 except IndexError:
                     print("No legal moves available. Stalemate or checkmate.")
         elif command == "quit":

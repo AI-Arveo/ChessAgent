@@ -147,7 +147,7 @@ class FullPerspectiveHeuristic(Heuristic):
     def __init__(self) -> None:
         super().__init__()
         layer1Size = 64 * 64 * 10 * 2
-        self.layerWV = nn.Sequential(
+        self.hidden = nn.Sequential(
             nn.Linear(layer1Size, 512),
             nn.ReLU(),
             nn.Linear(512, 32),
@@ -164,7 +164,8 @@ class FullPerspectiveHeuristic(Heuristic):
         return "FullPerspectiveHeuristic"
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.hidden(x)
+        fullPerspective = FullPerspectiveHeuristic()
+        return fullPerspective.hidden(x)
 
     def execute(self, board: chess.Board) -> float:
         turn = 1 if board.turn == chess.WHITE else -1
@@ -173,7 +174,7 @@ class FullPerspectiveHeuristic(Heuristic):
         elif isDraw(board):
             return 0.0
         features = FullPerspectiveHeuristic.featureExtraction(board)
-        features = features.to('cuda' if torch.cuda.is_available() else 'cpu')
+        features = features.to('cpu')
         score = self.forward(features).item()
         return score * turn
 
@@ -184,7 +185,7 @@ class FullPerspectiveHeuristic(Heuristic):
         the white king tensor. Then invert all positions to the black perspective. And do
         the same for the black side. Then calculate the white&black worldView
         """
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        device = torch.device('cpu')
 
         piece_map = board.piece_map()
         white_tensor_map = {piece.value: torch.zeros(64, device=device) for piece in PIECES}

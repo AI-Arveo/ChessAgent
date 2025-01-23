@@ -11,7 +11,7 @@ class MachineLearningUtility(Utility):
         self.network.eval()
 
     def board_value(self, board: chess.Board) -> float:
-        return self.network.execute(board=board)
+        return self.network.execute(board)
 
 
 class StockfishUtility(Utility):

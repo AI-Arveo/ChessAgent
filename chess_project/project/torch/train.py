@@ -177,7 +177,7 @@ if __name__ == '__main__':
         print(
             f"Finished validating for epoch {i + 1} with average validation loss: {averageValidationLoss}" + " " * 50 + "\n")
         torch.save(
-            model, f"../../{model._get_name()}_{i + 1}_0,{round(averageValidationLoss * 10000)}.pth")
+            model, f"../{model._get_name()}_{i + 1}_0,{round(averageValidationLoss * 10000)}")
         if earlyStopper is not None and earlyStopper.early_stop(averageValidationLoss):
             print(
                 f"Stopped early because previous loss {earlyStopper.minLoss} was lower than current loss {averageValidationLoss}")
