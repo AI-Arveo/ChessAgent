@@ -149,8 +149,11 @@ class FullPerspectiveHeuristic(Heuristic):
         layer1Size = 64 * 64 * 10 * 2
         self.layerWV = nn.Sequential(
             nn.Linear(layer1Size, 512),
+            nn.ReLU(),
             nn.Linear(512, 32),
+            nn.ReLU(),
             nn.Linear(32, 32),
+            nn.ReLU(),
             nn.Linear(32, 1)
         )
 

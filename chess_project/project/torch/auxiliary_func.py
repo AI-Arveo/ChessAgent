@@ -30,14 +30,25 @@ def board_to_tensor(board: chess.Board):
     return tensor
 
 
-def encode_moves(moves):
+def encode_moves(move: chess.Move, board: chess.Board) -> int:
     """
-    Encode a list of moves into numerical indices.
-    :param moves: List of moves in UCI string format.
-    :return: A numpy array of encoded moves and a move-to-index mapping dictionary.
+    Converteer een schaakzet naar een unieke numerieke index op basis van de legale zetten van het bord.
+
+    :param move: De zet die moet worden gecodeerd.
+    :param board: Het huidige bord waarvan de legale zetten worden gebruikt.
+    :return: Een numerieke index die overeenkomt met de zet.
     """
-    move_to_int = {move: idx for idx, move in enumerate(set(moves))}
-    return np.array([move_to_int[move] for move in moves], dtype=np.int64), move_to_int
+    # Haal de lijst van legale zetten
+    legal_moves = list(board.legal_moves)
+
+    # Maak een mapping van zetten naar indices
+    move_to_index = {legal_move: idx for idx, legal_move in enumerate(legal_moves)}
+
+    # Controleer of de zet legaal is en retourneer de index
+    if move in move_to_index:
+        return move_to_index[move]
+    else:
+        raise ValueError(f"Zet {move} is niet legaal op het huidige bord.")
 
 
 def decode_move_with_probabilities(output, board):
@@ -67,19 +78,55 @@ def decode_move_with_probabilities(output, board):
     return list(board.legal_moves)[0].uci(), 0.0
 
 
-def create_input_for_nn(board: chess.Board) -> torch.Tensor:
+def create_input_for_nn(board: chess.Board) -> list[float]:
     """
-    Converts a single chess board into a feature representation for the neural network.
+    Converts a chess board state into a flat list of features suitable for input to a neural network.
+    Each square of the board is represented numerically, along with game-specific metadata.
+
+    Features:
+    - 64 board squares: Encoded with piece type and color.
+      - 0: Empty square
+      - 1: White pawn, 2: White knight, ..., 6: White king
+      - -1: Black pawn, -2: Black knight, ..., -6: Black king
+    - 1 turn indicator: 1 for white, -1 for black.
+    - 4 castling rights: [white kingside, white queenside, black kingside, black queenside]
+    - 1 en passant target: Encoded as a square index (0-63) or -1 if no target.
+    - 1 half-move clock: Number of half-moves since the last pawn move or capture.
+    - 1 full-move number: Current move number.
+
+    Total feature size: 64 + 1 + 4 + 1 + 1 + 1 = 72.
     """
-    # Example implementation: Flatten the board's piece positions
-    feature_vector = torch.zeros(64, dtype=torch.float32)
+    features = []
+
+    # Encode board squares
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
-            feature_vector[square] = piece.piece_type * (1 if piece.color == chess.WHITE else -1)
-    return feature_vector
+            piece_value = piece.piece_type * (1 if piece.color == chess.WHITE else -1)
+        else:
+            piece_value = 0
+        features.append(piece_value)
 
+    # Encode turn indicator
+    features.append(1 if board.turn == chess.WHITE else -1)
 
+    # Encode castling rights
+    features.append(1 if board.has_kingside_castling_rights(chess.WHITE) else 0)
+    features.append(1 if board.has_queenside_castling_rights(chess.WHITE) else 0)
+    features.append(1 if board.has_kingside_castling_rights(chess.BLACK) else 0)
+    features.append(1 if board.has_queenside_castling_rights(chess.BLACK) else 0)
+
+    # Encode en passant square
+    en_passant_square = board.ep_square
+    features.append(en_passant_square if en_passant_square is not None else -1)
+
+    # Encode half-move clock
+    features.append(board.halfmove_clock)
+
+    # Encode full-move number
+    features.append(board.fullmove_number)
+
+    return features
 
 def decode_move(move_index, move_to_int):
     """

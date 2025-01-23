@@ -1,1 +1,1 @@
-python -m chess_project.project.chess_engines.uci_engine
+python -m chess_project.project.main

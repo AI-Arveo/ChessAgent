@@ -40,13 +40,14 @@ class ChessDataSet(Dataset):
         return NeuralNetwork.featureOutOfBoard(self.data[index]), torch.tensor(self.labels[index])
 
 class Loader():
-    def __init__(self, data_parser:list["DataParser"], batch_size: int = 32, heuristic = NeuralNetwork):
+    def __init__(self, data_parser:list["DataParser"], batch_size: int = 32, heuristic = NeuralNetwork) -> None:
+        self.batch_size = batch_size
+        self.data_size = sum([parser.size for parser in data_parser])
+        self.data: list[chess_data_batch] = None
         self.data_parser = data_parser
         self.heuristic = heuristic
-        self.data: list[chess_data_batch] = None
-        self.data_size = sum([parser.size for parser in data_parser])
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.batch_size = batch_size
+
 
     def __iter__(self) -> Generator[chess_data_tensor, None, None]:
         if self.data:
@@ -97,10 +98,11 @@ class Loader():
 
 class DataParser():
     def __init__(self, file_path:str):
-        self.size = 0
-        self.data_set: ChessDataSet = None
         self.file_path = file_path
-        self.cached_file = file_path +".cache"
+        self.cached_file = file_path + ".cache"
+        self.data_set: ChessDataSet = None
+        self.size = 0
+
 
     def parse(self, overwriteCache=False):
         if not overwriteCache and os.path.exists(self.cached_file):

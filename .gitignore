@@ -172,3 +172,23 @@ chess_project/FullPerspectiveHeuristic_3_0,0
 chess_project/FullPerspectiveHeuristic_4_0,0
 
 chess_project/FullPerspectiveHeuristic_5_0,0
+
+chess_project/FullPerspectiveHeuristic_1_0,0.pth
+
+chess_project/FullPerspectiveHeuristic_2_0,0.pth
+
+chess_project/FullPerspectiveHeuristic_3_0,0.pth
+
+chess_project/FullPerspectiveHeuristic_4_0,0.pth
+
+chess_project/FullPerspectiveHeuristic_5_0,0.pth
+
+chess_project/project/torch/FullPerspectiveHeuristic_1_0,0
+
+chess_project/project/torch/FullPerspectiveHeuristic_2_0,0
+
+chess_project/project/torch/FullPerspectiveHeuristic_3_0,0
+
+chess_project/project/torch/FullPerspectiveHeuristic_4_0,0
+
+chess_project/project/torch/FullPerspectiveHeuristic_5_0,0

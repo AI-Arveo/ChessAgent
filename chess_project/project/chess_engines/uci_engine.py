@@ -1,9 +1,9 @@
 import chess
 import chess.pgn
-from chess_project.project.chess_agents.agent import Agent
+from chess_project.project.chess_agents.agentNew import Agent
 
 
-class UciEngine():
+class UciEngine:
 
     def __init__(self, name: str, author: str, agent: Agent) -> None:
         self.name = name
@@ -24,7 +24,7 @@ class UciEngine():
             command = input().strip()  # Read input from the GUI
             if not command:
                 continue
-
+            print(f"Debug: Received command: {command}")  # Debugging
             if command == "uci":
                 # UCI initialization command
                 print(f"id name {self.name}")
@@ -34,6 +34,7 @@ class UciEngine():
                 print("readyok") # Readiness check
             elif command == "ucinewgame":
                 self.board = chess.Board()
+                print(self.board)
             elif command.startswith("position"):
                 self.__set_position(command)
             elif command.startswith("go"):
