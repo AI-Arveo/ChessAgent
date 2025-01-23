@@ -67,21 +67,18 @@ def decode_move_with_probabilities(output, board):
     return list(board.legal_moves)[0].uci(), 0.0
 
 
-def create_input_for_nn(games):
+def create_input_for_nn(board: chess.Board) -> torch.Tensor:
     """
-    Generate training data (input and labels) from a list of games.
-    :param games: List of chess games in python-chess PGN format.
-    :return: Tuple of numpy arrays (inputs, labels).
+    Converts a single chess board into a feature representation for the neural network.
     """
-    X = []
-    y = []
-    for game in games:
-        board = game.board()
-        for move in game.mainline_moves():
-            X.append(board_to_tensor(board).numpy())  # Convert tensor to numpy for storage
-            y.append(move.uci())
-            board.push(move)
-    return np.array(X, dtype=np.float32), np.array(y)
+    # Example implementation: Flatten the board's piece positions
+    feature_vector = torch.zeros(64, dtype=torch.float32)
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            feature_vector[square] = piece.piece_type * (1 if piece.color == chess.WHITE else -1)
+    return feature_vector
+
 
 
 def decode_move(move_index, move_to_int):

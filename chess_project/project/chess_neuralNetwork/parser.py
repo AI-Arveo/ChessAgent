@@ -123,22 +123,22 @@ class DataParser():
             for move in game.mainline_moves():
                 board.push(move)
                 if reader.get(board):
-                    opening_drops +=1
+                    opening_drops += 1
                     continue
                 elif board.is_checkmate():
                     mate_drops += 1
                 elif isDraw(board):
                     draw_drops += 1
                     continue
-                value = DataParser.evalStockFish(board, engine=engine)
+                value = self.evalStockFish(board, engine=engine)  # Corrected method call
                 if value is None:
                     continue
                 fen_position = board.fen()
                 cache_file.write(f"{fen_position},{value}\n")
-            if (i+1)%100 == 0:
-                print(f"Read {i+1} games for extracting positions",end="\r")
+            if (i + 1) % 100 == 0:
+                print(f"Read {i + 1} games for extracting positions", end="\r")
                 cache_file.flush()
-            i +=1
+            i += 1
         reader.close()
         cache_file.close()
         engine.close()

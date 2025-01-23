@@ -157,6 +157,9 @@ class FullPerspectiveHeuristic(Heuristic):
     def RelativeScore(self) -> bool:
         return True
 
+    def getName(self):
+        return "FullPerspectiveHeuristic"
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.hidden(x)
 

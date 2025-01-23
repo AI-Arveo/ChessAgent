@@ -5,6 +5,7 @@ from math import floor
 from typing import Type
 from time import sleep
 
+import chess
 import numpy as np
 from matplotlib import pyplot as pt
 import torch as t
@@ -15,9 +16,11 @@ from torch.cuda.amp import autocast
 from torch.optim import Adam, Optimizer
 
 import matplotlib.pyplot as plt
+from torch.utils.data import TensorDataset, DataLoader
 
 from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork, FullPerspectiveHeuristic, Heuristic
 from chess_project.project.chess_neuralNetwork.parser import Loader, DataParser
+from chess_project.project.torch.auxiliary_func import create_input_for_nn, encode_moves
 
 
 class Criterion:
@@ -77,7 +80,7 @@ def train(model: nn.Module, optimizer: Optimizer, criterion: Criterion, dataLoad
             print(
                 f"{batch}: Average loss over last {reportingPeriod} batches: {round(batchLoss, 5)} ")
     print(" " * 130, end="\r")
-    _averageTrainingLoss = _runningLoss / (len(dataLoader) // batchSize)
+    _averageTrainingLoss = _runningLoss / max(1, (len(dataLoader) // batchSize))
     return round(_averageTrainingLoss, 5)
 
 
@@ -102,15 +105,48 @@ def validate(model: nn.Module, criterion: Criterion, validationDataLoader: Loade
     return round(_validationLoss / (len(validationDataLoader) // batchSize), 5)
 
 
-def collectData(folder_path: str, heuristic: Type[NeuralNetwork], batchSize: int) -> Loader:
-    files = os.listdir(folder_path)
-    dataParsers: [DataParser] = []
-    for file in files:
-        if file.endswith(".pgn"):
-            dataParser = DataParser(file_path=folder_path + "/LichessEliteDatabase/" + file)
-            dataParser.parse()
-            dataParsers.append(dataParser)
-    return Loader(data_parser=dataParsers, heuristic=heuristic, batch_size=batchSize)
+def collectData(folder_path: str, heuristic: Type[NeuralNetwork], batchSize: int) -> DataLoader:
+    files = [f for f in os.listdir(folder_path) if f.startswith("lichess_elite_") and f.endswith(".pgn")]
+    inputs, targets = [], []
+
+    for filename in files:
+        file_path = os.path.join(folder_path, filename)
+        print(f"Processing file: {filename}")
+
+        with open(file_path, "r") as pgn_file:
+            game_count = 0
+            for game in iter(lambda: chess.pgn.read_game(pgn_file), None):
+                game_count += 1
+                board_states = []  # Collect all board states for the game
+                moves = []  # Collect corresponding moves
+
+                board = game.board()
+                for move in game.mainline_moves():
+                    board_states.append(board.copy())  # Save a snapshot of the board
+                    moves.append(move)
+                    board.push(move)
+
+                # Generate inputs and targets using create_input_for_nn and encode_moves
+                for state, move in zip(board_states, moves):
+                    inputs.append(create_input_for_nn(state))  # Convert board to input features
+                    targets.append(encode_moves([move]))  # Pass the move as a list to encode_moves
+
+            print(f"Games processed from {filename}: {game_count}")
+
+    # Debugging: Print the size of data
+    print(f"Total inputs collected: {len(inputs)}")
+    print(f"Total targets collected: {len(targets)}")
+
+    # Handle empty data gracefully
+    if len(inputs) == 0 or len(targets) == 0:
+        raise ValueError("No data was collected. Please verify your .pgn files and processing logic.")
+
+    # Convert inputs and targets to tensors
+    inputs_tensor = torch.tensor(inputs, dtype=torch.float32)
+    targets_tensor = torch.tensor(targets, dtype=torch.long)
+
+    dataset = TensorDataset(inputs_tensor, targets_tensor)
+    return DataLoader(dataset, batch_size=batchSize, shuffle=True)
 
 
 if __name__ == '__main__':
@@ -135,7 +171,7 @@ if __name__ == '__main__':
     """
     vvv Insert model here vvv
     """
-    # model: nn.Module = CanCaptureHeuristicBit(128, 64, 0, nn.LeakyReLU(), 0.3)
+     #model: nn.Module = CanCaptureHeuristicBit(128, 64, 0, nn.LeakyReLU(), 0.3)
     model: Heuristic = FullPerspectiveHeuristic()
     earlyStopper: EarlyStopper = EarlyStopper(1, 0.005)
     if preload:
@@ -150,8 +186,8 @@ if __name__ == '__main__':
 
 
     # Specify the folder path you want to get filepaths from
-    trainingFolderPath = r"D:\PythonProjects\ChessAgent"
-    validationFolderPath = r"D:\PythonProjects\ChessAgent"
+    trainingFolderPath = r"D:\PythonProjects\ChessAgent\LichessEliteDatabase"
+    validationFolderPath = r"D:\PythonProjects\ChessAgent\LichessEliteDatabase"
 
     trainDataLoader = collectData(
         trainingFolderPath, model.__class__, batchSize)
@@ -180,7 +216,7 @@ if __name__ == '__main__':
         print(
             f"Finished validating for epoch {i + 1} with average validation loss: {averageValidationLoss}" + " " * 50 + "\n")
         torch.save(
-            model, f"project/data/models/{model.getName()}_{i + 1}_0,{round(averageValidationLoss * 10000)}")
+            model, f"../../{model._get_name()}_{i + 1}_0,{round(averageValidationLoss * 10000)}")
         if earlyStopper is not None and earlyStopper.early_stop(averageValidationLoss):
             print(
                 f"Stopped early because previous loss {earlyStopper.minLoss} was lower than current loss {averageValidationLoss}")
