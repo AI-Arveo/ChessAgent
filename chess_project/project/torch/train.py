@@ -12,10 +12,7 @@ import torch.optim
 from torch.cuda.amp import autocast
 from torch.optim import Adam, Optimizer
 
-import matplotlib.pyplot as plt
-from torch.utils.data import TensorDataset, DataLoader
-
-from chess_project.project.chess_neuralNetwork.neural_network import NeuralNetwork, FullPerspectiveHeuristic, Heuristic
+from chess_project.project.chess_neuralNetwork.neural_network import FullPerspectiveHeuristic, Heuristic
 from chess_project.project.chess_neuralNetwork.parser import Loader, DataParser
 
 
@@ -115,7 +112,7 @@ def collectData(folder_path: str, heuristic: Type[Heuristic], batchSize: int) ->
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog="DataTrainer", description="Train our model using datasets located in /project/data/raw")
-    parser.add_argument('-l', '--learning-rate', default=0.0001, type=float)
+    parser.add_argument('-l', '--learning-rate', default=0.1, type=float)
     parser.add_argument('-b', '--batch-size', default=32, type=int)
     parser.add_argument('-e', '--epochs', default=5, type=int)
     parser.add_argument('--preload', default=None, type=str,
@@ -129,7 +126,7 @@ if __name__ == '__main__':
     print(
         f"The learning parameters are:\n- Learning rate:\t{learningRate}\n- batchSize:\t\t{batchSize}\n- number of epochs:\t{numberOfEpochs}\n- preload:\t\t{preload}\n")
 
-    # TODO use the dataset to train a NeuralNetworkHeuristic, afterwards save it.
+    # TODO use the dataset to train a Heuristic, afterwards save it.
 
     """
     vvv Insert model here vvv
